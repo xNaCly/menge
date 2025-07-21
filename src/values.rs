@@ -1,9 +1,6 @@
 enum Value {
+    // Smallest possible value, floating point number
     Atom(f64),
-    Ident(String),
-    Builtin(String, Box<Value>),
     // compile time known sets
     Set(Vec<Value>),
-    // TODO: represent set builder notation
-    // LazySet(),
 }
