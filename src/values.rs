@@ -1,5 +1,6 @@
 use crate::ast;
 
+#[derive(Debug, PartialEq)]
 pub enum Value {
     // Smallest possible value, floating point number
     Atom(f64),
@@ -13,7 +14,7 @@ impl TryFrom<ast::Node> for Value {
     fn try_from(value: ast::Node) -> Result<Self, Self::Error> {
         Ok(match value {
             ast::Node::Atom(atom) => Value::Atom(atom),
-            _ => return Err("Can only convert ast::Node::Atom to value::Value".into()),
+            _ => return Err(format!("Cannot convert {:?} to value::Value", value).into()),
         })
     }
 }
