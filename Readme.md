@@ -10,6 +10,8 @@ See below for an example:
 a := {1, 2}
 b := {2, 3}
 
+@print {a,b} # => {{1,2},{2,3}}
+
 # basic operations
     # {2}
     intersection := a @intersect b
@@ -19,20 +21,20 @@ b := {2, 3}
     diff := (a @diff b) @union (b @diff a)
 
     subset := a @in b # 1 (true)
-    subset := {1} @in b # @E (false)
-    subset := {1, 2} @in a # lhs is returned
+    subset1 := {1} @in b # E (false)
+    subset2 := {1, 2} @in a # lhs is returned
 
 # predefined sets
     # empty set
-    @E 
+    E 
     # natural numbers
-    @N 
+    N 
     # integers
-    @Z
+    Z
     # rational numbers
-    @Q
+    Q
     # real numbers
-    @R
+    R
 
 # building sets
     s0 := { 0..19 } # 0..19 = {0,1,2,...,19}
@@ -44,5 +46,5 @@ b := {2, 3}
     #
     # use <set builder variable> <- <set> to feed lambda
     s1_excluding_0to10 := { n<-s1 | n @notin 0..10 } # {10..19}
-    s3 := { n<-s0 | n @notin 0..10 } # {10..19}
+    s0 := { n<-s0 | n @notin 0..10 } # {10..19}
 ```
