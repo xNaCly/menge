@@ -1,5 +1,5 @@
 use crate::{
-    error,
+    env, error,
     values::{self, Value},
 };
 
@@ -11,10 +11,19 @@ pub enum Node {
     Set(Vec<Node>),
     // Variables and builder names
     Ident(String),
-    // A Builtin with name and rest
-    Builtin {
+    // <name> := <value>
+    Assign {
         name: String,
         value: Box<Node>,
+    },
+    Binary {
+        name: String,
+        lhs: Box<Node>,
+        rhs: Box<Node>,
+    },
+    Unary {
+        name: String,
+        lhs: Box<Node>,
     },
     // Represents <x>..<y>, inclusive
     Range(Option<f64>, Option<f64>),
@@ -27,16 +36,22 @@ pub enum Node {
 }
 
 impl Node {
-    pub fn interpret(self) -> Result<values::Value, error::Error> {
+    pub fn interpret(self, env: &mut env::Env) -> Result<values::Value, error::Error> {
         match self {
             Node::Atom(_) => self.try_into(),
             Node::Set(elements) => {
                 let values: Result<Vec<_>, _> =
-                    elements.into_iter().map(|n| n.interpret()).collect();
+                    elements.into_iter().map(|n| n.interpret(env)).collect();
                 Ok(Value::Set(values?))
             }
-            Node::Ident(_) => todo!(),
-            Node::Builtin { .. } => todo!(),
+            Node::Ident(name) => env
+                .variable_table
+                .get(&name)
+                .ok_or_else(|| format!("Unkown variable '{name}'").into())
+                .map(Clone::clone),
+            Node::Assign { .. } => todo!(),
+            Node::Binary { .. } => todo!(),
+            Node::Unary { .. } => todo!(),
             Node::Range(_, _) => todo!(),
             Node::Builder { .. } => todo!(),
         }
@@ -45,26 +60,45 @@ impl Node {
 
 #[cfg(test)]
 mod ast {
-    use crate::{ast::Node, values::Value};
+    use crate::{ast::Node, env, values::Value};
 
     #[test]
     fn atoms() {
         let tests = vec![(Node::Atom(3.1415f64), Value::Atom(3.1415f64))];
+        let mut env = env::Env::default();
 
         for (input, expected) in tests {
-            assert_eq!(expected, input.interpret().unwrap());
+            let interpreted = input.interpret(&mut env).unwrap();
+            println!("{interpreted}");
+            assert_eq!(expected, interpreted);
         }
     }
 
     #[test]
     fn sets() {
-        let tests = vec![(
-            Node::Set(vec![Node::Atom(25f64), Node::Atom(24f64)]),
-            Value::Set(vec![Value::Atom(25f64), Value::Atom(24f64)]),
-        )];
+        let tests = vec![
+            (
+                Node::Set(vec![Node::Atom(25f64), Node::Atom(24f64)]),
+                Value::Set(vec![Value::Atom(25f64), Value::Atom(24f64)]),
+            ),
+            (
+                Node::Set(vec![
+                    Node::Set(vec![Node::Atom(25f64), Node::Atom(24f64)]),
+                    Node::Set(vec![Node::Atom(25f64), Node::Atom(24f64)]),
+                ]),
+                Value::Set(vec![
+                    Value::Set(vec![Value::Atom(25f64), Value::Atom(24f64)]),
+                    Value::Set(vec![Value::Atom(25f64), Value::Atom(24f64)]),
+                ]),
+            ),
+        ];
+
+        let mut env = env::Env::default();
 
         for (input, expected) in tests {
-            assert_eq!(expected, input.interpret().unwrap());
+            let interpreted = input.interpret(&mut env).unwrap();
+            println!("{interpreted}");
+            assert_eq!(expected, interpreted);
         }
     }
 }
